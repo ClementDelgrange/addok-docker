@@ -1,0 +1,40 @@
+version: "3.7"
+
+networks:
+  internal:
+
+services:
+  addok:
+    image: addok:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WORKERS: 2
+      WORKER_TIMEOUT: 30
+      LOG_QUERIES: 1
+      LOG_NOT_FOUND: 1
+      SLOW_QUERIES: 200
+    depends_on:
+      - redis
+    networks:
+      - internal
+    ports:
+      - "7878:7878"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      replicas: 4
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - internal
